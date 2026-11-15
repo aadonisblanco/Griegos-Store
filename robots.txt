@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /_dev/
+Disallow: /migrations/
+
+Sitemap: https://oficial.griegosshop.workers.dev/sitemap.xml

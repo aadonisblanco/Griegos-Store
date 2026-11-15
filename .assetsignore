@@ -1,0 +1,26 @@
+# =========================================================
+# GRIEGOS - ARCHIVOS QUE NO SE PUBLICAN
+# Formato .gitignore. Todo lo que case aqui no se sube como
+# archivo estatico del sitio.
+# =========================================================
+
+# Codigo del servidor y del propio Worker
+functions/
+src/
+
+# Herramientas y datos de desarrollo
+_dev/
+_local/
+migrations/
+server.py
+
+# Configuracion y documentacion
+wrangler.jsonc
+wrangler.toml
+wrangler.toml.example
+_routes.json
+package.json
+package-lock.json
+.gitignore
+.assetsignore
+*.md

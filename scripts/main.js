@@ -29,6 +29,8 @@
 
     checkoutError: "#checkout-error",
 
+    checkoutSuccess: "#checkout-success",
+
     deliveryMode: "#delivery-mode",
 
     deliveryBranch: "#delivery-branch",
@@ -621,6 +623,219 @@
 
   }
 
+  function showCheckoutSuccess(message) {
+
+    const exito = getElement(
+      SELECTORS.checkoutSuccess
+    );
+
+    if (!exito) return;
+
+    exito.textContent = message;
+
+    exito.hidden = false;
+
+  }
+
+  function clearCheckoutSuccess() {
+
+    const exito = getElement(
+      SELECTORS.checkoutSuccess
+    );
+
+    if (!exito) return;
+
+    exito.textContent = "";
+
+    exito.hidden = true;
+
+  }
+
+  /* REGISTRO DEL PEDIDO EN EL BACKEND */
+
+  function generarIdSolicitud() {
+
+    try {
+
+      if (
+        window.crypto &&
+        typeof window.crypto.randomUUID === "function"
+      ) {
+
+        return window.crypto.randomUUID();
+
+      }
+
+    } catch (fallo) {
+
+      /* Sin crypto.randomUUID: se usa el respaldo. */
+
+    }
+
+    return (
+      "s-" +
+      Date.now().toString(36) +
+      "-" +
+      Math.random().toString(36).slice(2, 10)
+    );
+
+  }
+
+  function construirSolicitud(order, requestId) {
+
+    const items = Array.isArray(order.items)
+      ? order.items
+      : [];
+
+    return {
+
+      requestId,
+
+      website: "",
+
+      customer: {
+
+        name: order.customer?.name || "",
+
+        phone: order.customer?.phone || "",
+
+        municipality: order.customer?.municipality || ""
+
+      },
+
+      delivery: {
+
+        mode: order.delivery?.mode || "",
+
+        branchId: order.delivery?.branchId || "",
+
+        zone: order.delivery?.zone || "",
+
+        address: order.delivery?.address || "",
+
+        reference: order.delivery?.reference || "",
+
+        notes: order.delivery?.notes || ""
+
+      },
+
+      payment: {
+
+        id: order.payment?.id || ""
+
+      },
+
+      items: items.map(item => ({
+
+        id: String(item.id || ""),
+
+        quantity: Number(item.quantity) || 0
+
+      }))
+
+    };
+
+  }
+
+  async function registrarPedido(order, requestId) {
+
+    const api = CONFIG.api || {};
+
+    if (api.enabled === false || !api.ordersEndpoint) {
+
+      return null;
+
+    }
+
+    if (location.protocol === "file:") {
+
+      return null;
+
+    }
+
+    let control = null;
+
+    let temporizador = null;
+
+    try {
+
+      if (typeof AbortController === "function") {
+
+        control = new AbortController();
+
+        temporizador = setTimeout(
+
+          () => control.abort(),
+
+          Number(api.timeoutMs) || 8000
+
+        );
+
+      }
+
+      const respuesta = await fetch(api.ordersEndpoint, {
+
+        method: "POST",
+
+        headers: {
+
+          "Content-Type": "application/json",
+
+          "Accept": "application/json"
+
+        },
+
+        body: JSON.stringify(
+          construirSolicitud(order, requestId)
+        ),
+
+        signal: control ? control.signal : undefined
+
+      });
+
+      let datos = {};
+
+      try {
+
+        datos = await respuesta.json();
+
+      } catch (fallo) {
+
+        datos = {};
+
+      }
+
+      if (respuesta.ok && datos.ok) {
+
+        return {
+          ok: true,
+          codigo: datos.codigo || ""
+        };
+
+      }
+
+      return {
+        ok: false,
+        error: datos.error || ""
+      };
+
+    } catch (fallo) {
+
+      // Sin backend (file://, servidor estático o sin red):
+      // el pedido por WhatsApp sigue funcionando igual.
+      return {
+        ok: false,
+        silencioso: true
+      };
+
+    } finally {
+
+      if (temporizador) clearTimeout(temporizador);
+
+    }
+
+  }
+
   /* VALIDAR FORMULARIO */
 
   function validateCheckoutForm() {
@@ -1056,6 +1271,8 @@
 
     clearPreparedOrder();
 
+    clearCheckoutSuccess();
+
     const items = CART.getItems
       ? CART.getItems()
       : [];
@@ -1095,6 +1312,8 @@
 
     const order = getOrderDetails();
 
+    const requestId = generarIdSolicitud();
+
     const message =
       buildWhatsAppOrderMessage(order);
 
@@ -1127,6 +1346,27 @@
 
     }
 
+    registrarPedido(order, requestId).then(resultado => {
+
+      if (!resultado) return;
+
+      if (resultado.ok) {
+
+        showCheckoutSuccess(
+          "Solicitud registrada con el código " +
+          resultado.codigo +
+          ". Guárdalo para cualquier consulta. " +
+          "GRIEGOS confirmará disponibilidad, entrega y pago."
+        );
+
+      } else if (resultado.error) {
+
+        showCheckoutError(resultado.error);
+
+      }
+
+    });
+
   }
 
   /* INICIALIZAR CHECKOUT */
@@ -1148,6 +1388,9 @@
 
     form.addEventListener("input", clearPreparedOrder);
     form.addEventListener("change", clearPreparedOrder);
+
+    form.addEventListener("input", clearCheckoutSuccess);
+    form.addEventListener("change", clearCheckoutSuccess);
 
     getElement(SELECTORS.deliveryMode)
       ?.addEventListener(

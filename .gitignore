@@ -1,0 +1,10 @@
+# Datos locales y herramientas: nunca publicar
+_local/
+__pycache__/
+*.pyc
+.wrangler/
+node_modules/
+.env
+.env.*
+.dev.vars
+.dev.vars.*

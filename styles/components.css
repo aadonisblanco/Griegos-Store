@@ -947,6 +947,16 @@ body.cart-is-open {
   line-height: 1.6;
 }
 
+.checkout-success {
+  padding: 13px 15px;
+  border: 1px solid rgba(76, 175, 125, 0.5);
+  border-radius: var(--radius-small);
+  background: rgba(76, 175, 125, 0.12);
+  color: #C9F5DC;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
 .checkout-legal {
   max-width: 680px;
   margin: 0 auto;

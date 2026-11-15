@@ -1,0 +1,52 @@
+// =========================================================
+// GRIEGOS · CONFIGURACIÓN DEL WORKER (Cloudflare)
+//
+// Este archivo es el que lee Cloudflare al construir desde
+// GitHub. No hace falta instalar nada.
+//
+// ⚠ LO ÚNICO QUE TIENES QUE EDITAR:
+//    "database_id" → pega el ID de tu base D1.
+//    (Cloudflare → Storage & Databases → D1 → griegos-pedidos)
+// =========================================================
+
+{
+  // Debe ser EXACTAMENTE el nombre del Worker en el panel.
+  // Con "oficial" la dirección es oficial.griegosshop.workers.dev
+  "name": "oficial",
+
+  "main": "src/index.js",
+  "compatibility_date": "2026-11-15",
+
+  "assets": {
+    // El sitio está en la raíz del repositorio (index.html).
+    "directory": ".",
+    // Permite que el Worker sirva los archivos.
+    "binding": "ASSETS",
+    // Solo estas rutas pasan primero por el Worker.
+    // Todo lo demás (HTML, CSS, imágenes) lo sirve Cloudflare
+    // directamente, sin gastar ejecuciones del Worker.
+    "run_worker_first": [
+      "/api/*",
+      "/_dev/*",
+      "/migrations/*",
+      "/functions/*",
+      "/src/*",
+      "/_local/*",
+      "/server.py",
+      "/wrangler.*",
+      "/*.md",
+      "/package*.json"
+    ]
+  },
+
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "griegos-pedidos",
+      // Database ID de D1 (Storage & Databases → D1 → griegos-pedidos).
+      // Si no coincide con la base real, el despliegue falla con
+      // "database not found".
+      "database_id": "49ad645c-91b4-4bd5-b02a-46a358a2134f"
+    }
+  ]
+}

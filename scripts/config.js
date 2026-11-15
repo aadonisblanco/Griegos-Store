@@ -237,6 +237,14 @@
       }
     },
 
+    /* BACKEND (Cloudflare Pages Functions + D1) */
+
+    api: {
+      enabled: true,
+      ordersEndpoint: "/api/pedido",
+      timeoutMs: 8000
+    },
+
     /* CARRITO */
 
     cart: {
